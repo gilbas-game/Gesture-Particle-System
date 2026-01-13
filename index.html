@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesture Particle System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Canvas -->
+        <div id="canvas-container">
+            <canvas id="webcam-canvas"></canvas>
+            <canvas id="particle-canvas"></canvas>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-sliders-h"></i> Particle Controls</h2>
+                <button id="toggle-panel" class="icon-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <div class="panel-content">
+                <!-- Pattern Selection -->
+                <div class="control-section">
+                    <h3><i class="fas fa-shapes"></i> Pattern</h3>
+                    <div class="pattern-grid">
+                        <div class="pattern-option active" data-pattern="sphere">
+                            <div class="pattern-preview sphere"></div>
+                            <span>Sphere</span>
+                        </div>
+                        <div class="pattern-option" data-pattern="cube">
+                            <div class="pattern-preview cube"></div>
+                            <span>Cube</span>
+                        </div>
+                        <div class="pattern-option" data-pattern="torus">
+                            <div class="pattern-preview torus"></div>
+                            <span>Torus</span>
+                        </div>
+                        <div class="pattern-option" data-pattern="galaxy">
+                            <div class="pattern-preview galaxy"></div>
+                            <span>Galaxy</span>
+                        </div>
+                        <div class="pattern-option" data-pattern="wave">
+                            <div class="pattern-preview wave"></div>
+                            <span>Wave</span>
+                        </div>
+                        <div class="pattern-option" data-pattern="custom">
+                            <div class="pattern-preview custom"></div>
+                            <span>Custom</span>
+                        </div>
+                    </div>
+                </div>
+
+<div class="control-section">
+    <h3><i class="fas fa-hand-sparkles"></i> Sign Language Gestures</h3>
+    <div class="sign-language-controls">
+        <div class="sign-option" data-gesture="i">
+            <div class="sign-preview">I</div>
+            <span>Letter "I"</span>
+            <small>Pinkie finger up</small>
+        </div>
+        <div class="sign-option" data-gesture="love">
+            <div class="sign-preview">
+                <i class="fas fa-heart"></i>
+            </div>
+            <span>Word "LOVE"</span>
+            <small>Crossed arms on chest</small>
+        </div>
+        <div class="sign-option" data-gesture="you">
+            <div class="sign-preview">YOU</div>
+            <span>Word "YOU"</span>
+            <small>Point forward</small>
+        </div>
+    </div>
+    <div class="gesture-message" id="gesture-message">
+        <i class="fas fa-comment-alt"></i>
+        <span>Waiting for gesture...</span>
+    </div>
+</div>
+
+                <!-- Color Control -->
+                <div class="control-section">
+                    <h3><i class="fas fa-palette"></i> Color</h3>
+                    <div class="color-controls">
+                        <input type="color" id="particle-color" value="#ff6b6b">
+                        <div class="color-presets">
+                            <div class="color-preset" style="background-color: #ff6b6b;" data-color="#ff6b6b"></div>
+                            <div class="color-preset" style="background-color: #4ecdc4;" data-color="#4ecdc4"></div>
+                            <div class="color-preset" style="background-color: #45b7d1;" data-color="#45b7d1"></div>
+                            <div class="color-preset" style="background-color: #96ceb4;" data-color="#96ceb4"></div>
+                            <div class="color-preset" style="background-color: #feca57;" data-color="#feca57"></div>
+                            <div class="color-preset" style="background-color: #ff9ff3;" data-color="#ff9ff3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Particle Settings -->
+                <div class="control-section">
+                    <h3><i class="fas fa-cog"></i> Settings</h3>
+                    <div class="slider-control">
+                        <label>Particle Count: <span id="count-value">5000</span></label>
+                        <input type="range" id="particle-count" min="100" max="20000" value="5000" step="100">
+                    </div>
+                    <div class="slider-control">
+                        <label>Size: <span id="size-value">2</span></label>
+                        <input type="range" id="particle-size" min="0.5" max="10" value="2" step="0.1">
+                    </div>
+                    <div class="slider-control">
+                        <label>Speed: <span id="speed-value">1</span></label>
+                        <input type="range" id="animation-speed" min="0" max="5" value="1" step="0.1">
+                    </div>
+                </div>
+
+                <!-- Gesture Status -->
+                <div class="control-section">
+                    <h3><i class="fas fa-hand-peace"></i> Gesture Status</h3>
+                    <div class="gesture-display">
+                        <div class="gesture-icon">
+                            <i class="fas fa-hand-rock" id="gesture-icon"></i>
+                        </div>
+                        <div class="gesture-info">
+                            <p>Hand Status: <span id="hand-status">Waiting...</span></p>
+                            <p>Confidence: <span id="confidence">0%</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button id="generate-btn" class="btn-primary">
+                        <i class="fas fa-magic"></i> Generate Particles
+                    </button>
+                    <button id="reset-btn" class="btn-secondary">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                    <button id="fullscreen-btn" class="btn-icon">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>Loading Gesture Detection Model...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="gestureDetector.js"></script>
+    <script src="particleSystem.js"></script>
+    <script src="uiManager.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
